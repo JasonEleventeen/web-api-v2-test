@@ -71,7 +71,7 @@ async function shareBase64Image(base64, fileName = 'image.png') {
     const blob = base64ToBlob(base64, mimeType);
     const file = blobToFile(blob, fileName);
 
-    if(!navigator.canShare({ files: [] })) {
+    if(!navigator.canShare({ files: [file] })) {
         alert('File sharing not supported on this device');
         return;
     }
