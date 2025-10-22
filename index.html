@@ -1,0 +1,100 @@
+<html>
+
+<body>
+    TEST WEB SHARE PAGE 2
+    
+    <div id="device-info"></div>
+    <button>SHARE</button>
+    
+<script>
+function getIOSVersion() {
+    const userAgent = navigator.userAgent;
+    
+    // Check if it's iOS
+    if (/iPad|iPhone|iPod/.test(userAgent)) {
+        // Extract iOS version
+        const match = userAgent.match(/OS (\d+)_(\d+)_?(\d+)?/);
+        if (match) {
+            const major = match[1];
+            const minor = match[2];
+            const patch = match[3] || '0';
+            return `iOS ${major}.${minor}.${patch}`;
+        }
+        return 'iOS (version unknown)';
+    }
+    
+    // Check for other mobile platforms
+    if (/Android/.test(userAgent)) {
+        const match = userAgent.match(/Android (\d+\.?\d*)/);
+        return match ? `Android ${match[1]}` : 'Android (version unknown)';
+    }
+    
+    return 'Not iOS/Android';
+}
+
+function displayDeviceInfo() {
+    const deviceInfo = document.getElementById('device-info');
+    const osVersion = getIOSVersion();
+    const shareSupport = navigator.share ? 'Yes' : 'No';
+    const fileShareSupport = (navigator.canShare && navigator.canShare({ files: [] })) ? 'Yes' : 'No';
+    
+    deviceInfo.innerHTML = `
+        <p><strong>OS:</strong> ${osVersion}</p>
+        <p><strong>Web Share API:</strong> ${shareSupport}</p>
+        <p><strong>File Sharing:</strong> ${fileShareSupport}</p>
+        <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+    `;
+}
+
+// Display info when page loads
+displayDeviceInfo();
+
+function base64ToBlob(base64, mimeType) {
+    const byteString = atob(base64.split(',')[1]); // remove `data:image/png;base64,`
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], { type: mimeType });
+}
+function blobToFile(blob, fileName) {
+    return new File([blob], fileName, { type: blob.type });
+}
+async function shareBase64Image(base64, fileName = 'image.png') {
+    if (!navigator.canShare ) {
+        alert('Sharing not supported on this device');
+        return;
+    }
+    
+    const mimeType = base64.match(/^data:(image\/\w+);base64,/)[1];
+    const blob = base64ToBlob(base64, mimeType);
+    const file = blobToFile(blob, fileName);
+
+    if(!navigator.canShare({ files: [] })) {
+        alert('File sharing not supported on this device');
+        return;
+    }
+
+
+    try {
+        await navigator.share({
+            files: [file],
+            title: 'Check out this image!',
+            text: 'Sharing a base64 image via Web Share API'
+        });
+        console.log('Share successful!');
+    } catch (err) {
+        console.error('Share failed:', err);
+    }
+}
+document.querySelector('button').addEventListener('click', () => {
+    const base64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA' +
+        'AAAFCAYAAACNbyblAAAAHElEQVQI12P4' +
+        '//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=='; // A small red dot image
+    shareBase64Image(base64Image, 'red-dot.png');
+});
+
+</script>
+</body>
+</html>
